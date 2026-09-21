@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}All Scholarships{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">All Scholarships</h1>
+
+    {% if scholarships %}
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Organization</th>
+                    <th>Amount</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in scholarships %}
+                    <tr class="{{ 'table-danger' if s.is_overdue else '' }}">
+                        <td>{{ s.name }}</td>
+                        <td>{{ s.organization }}</td>
+                        <td>${{ "%.2f"|format(s.amount) }}</td>
+                        <td>{{ s.due_date.strftime("%b %d, %Y") }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ s.status.replace("_", " ")|title }}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('main.edit_scholarship', scholarship_id=s.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <form action="{{ url_for('main.delete_scholarship', scholarship_id=s.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete {{ s.name }}?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No scholarships yet. <a href="{{ url_for('main.create_scholarship') }}">Add your first one</a>.</p>
+    {% endif %}
+{% endblock %}

@@ -31,7 +31,13 @@ def create_app(config_name=None):
     migrate.init_app(app, db)
 
     login_manager.login_view = "main.login"
-
+    @login_manager.user_loader
+    def load_user(user_id):
+        # Placeholder until Phase 3 builds real User accounts.
+        # Returning None means Flask-Login always treats requests as
+        # "not logged in" for now, which is fine since nothing is
+        # protected with @login_required yet.
+        return None
     from app import models  # noqa: F401  (import so SQLAlchemy sees the models)
     from app.routes import main_bp
 
