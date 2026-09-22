@@ -12,6 +12,35 @@ def index():
     scholarships = Scholarship.query.order_by(Scholarship.due_date.asc()).all()
     return render_template("index.html", scholarships=scholarships)
 
+@main_bp.route("/dashboard")
+def dashboard():
+    """Summary view: upcoming deadlines and totals."""
+    from datetime import date
+
+    all_scholarships = Scholarship.query.all()
+
+    # Upcoming = not yet resolved (still worth tracking a deadline for)
+    # and due today or later, soonest first.
+    upcoming = sorted(
+        [s for s in all_scholarships if s.status in ("not_started", "in_progress", "submitted") and s.due_date >= date.today()],
+        key=lambda s: s.due_date,
+    )
+
+    # "Applied for" = money tied up in anything you've actually submitted
+    # or are working on — not started doesn't count yet.
+    total_applied = sum(
+        s.amount for s in all_scholarships if s.status in ("in_progress", "submitted")
+    )
+    total_awarded = sum(s.amount for s in all_scholarships if s.status == "awarded")
+    total_potential = sum(s.amount for s in all_scholarships if s.status != "rejected")
+
+    return render_template(
+        "dashboard.html",
+        upcoming=upcoming,
+        total_applied=total_applied,
+        total_awarded=total_awarded,
+        total_potential=total_potential,
+    )
 
 @main_bp.route("/scholarships/new", methods=["GET", "POST"])
 def create_scholarship():
