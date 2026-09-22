@@ -32,6 +32,11 @@
         </div>
     </div>
 
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
     <h2 class="mb-3">Upcoming Deadlines</h2>
 
     {% if upcoming %}
@@ -64,4 +69,27 @@
     {% else %}
         <p class="text-muted">No upcoming deadlines.</p>
     {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        const statusData = {{ amounts_by_status | tojson }};
+
+        new Chart(document.getElementById("statusChart"), {
+            type: "bar",
+            data: {
+                labels: Object.keys(statusData).map(s => s.replace("_", " ")),
+                datasets: [{
+                    label: "Amount ($)",
+                    data: Object.values(statusData),
+                    backgroundColor: "#0d6efd",
+                }],
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true },
+                },
+            },
+        });
+    </script>
+
 {% endblock %}

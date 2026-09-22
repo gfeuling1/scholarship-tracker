@@ -59,12 +59,21 @@ def dashboard():
     total_awarded = sum(s.amount for s in all_scholarships if s.status == "awarded")
     total_potential = sum(s.amount for s in all_scholarships if s.status != "rejected")
 
+    # Build {status: total_amount} for every status, in a fixed order,
+    # so the chart's bars always appear in the same left-to-right sequence
+    # regardless of which statuses happen to have data.
+    amounts_by_status = {
+        status: sum(s.amount for s in all_scholarships if s.status == status)
+        for status in Scholarship.STATUSES
+    }
+
     return render_template(
         "dashboard.html",
         upcoming=upcoming,
         total_applied=total_applied,
         total_awarded=total_awarded,
         total_potential=total_potential,
+        amounts_by_status=amounts_by_status,
     )
 
 @main_bp.route("/scholarships/new", methods=["GET", "POST"])
