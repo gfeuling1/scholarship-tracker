@@ -8,9 +8,34 @@ main_bp = Blueprint("main", __name__)
 
 @main_bp.route("/")
 def index():
-    """List all scholarships, sorted by soonest due date first."""
-    scholarships = Scholarship.query.order_by(Scholarship.due_date.asc()).all()
-    return render_template("index.html", scholarships=scholarships)
+    """List scholarships, optionally filtered by status and/or search text."""
+    status_filter = request.args.get("status", "")
+    search_query = request.args.get("q", "").strip()
+
+    query = Scholarship.query
+
+    if status_filter:
+        query = query.filter(Scholarship.status == status_filter)
+
+    if search_query:
+        # ilike = case-insensitive LIKE. The %...% wildcards mean "contains",
+        # not "starts with" or "exact match".
+        query = query.filter(
+            db.or_(
+                Scholarship.name.ilike(f"%{search_query}%"),
+                Scholarship.organization.ilike(f"%{search_query}%"),
+            )
+        )
+
+    scholarships = query.order_by(Scholarship.due_date.asc()).all()
+
+    return render_template(
+        "index.html",
+        scholarships=scholarships,
+        statuses=Scholarship.STATUSES,
+        status_filter=status_filter,
+        search_query=search_query,
+    )
 
 @main_bp.route("/dashboard")
 def dashboard():

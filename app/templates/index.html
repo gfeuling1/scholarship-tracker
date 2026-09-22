@@ -5,6 +5,26 @@
 {% block content %}
     <h1 class="mb-4">All Scholarships</h1>
 
+    <form method="GET" class="row g-2 mb-4">
+        <div class="col-auto">
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                {% for s in statuses %}
+                    <option value="{{ s }}" {{ "selected" if s == status_filter else "" }}>
+                        {{ s.replace("_", " ")|title }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <input type="text" name="q" class="form-control" placeholder="Search name or organization..." value="{{ search_query }}">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">Clear</a>
+        </div>
+    </form>
+
     {% if scholarships %}
         <table class="table table-striped align-middle">
             <thead>
