@@ -10,6 +10,7 @@ main_bp = Blueprint("main", __name__)
 
 
 @main_bp.route("/")
+@login_required
 def index():
     """List scholarships, optionally filtered by status and/or search text."""
     status_filter = request.args.get("status", "")
@@ -73,6 +74,7 @@ def logout():
     return redirect(url_for("main.login"))
 
 @main_bp.route("/dashboard")
+@login_required
 def dashboard():
     """Summary view: upcoming deadlines and totals."""
     from datetime import date
@@ -112,6 +114,7 @@ def dashboard():
     )
 
 @main_bp.route("/scholarships/new", methods=["GET", "POST"])
+@login_required
 def create_scholarship():
     """Show the create form (GET) or save a new scholarship (POST)."""
     form = ScholarshipForm()
@@ -137,6 +140,7 @@ def create_scholarship():
 
 
 @main_bp.route("/scholarships/<int:scholarship_id>/edit", methods=["GET", "POST"])
+@login_required
 def edit_scholarship(scholarship_id):
     """Show the edit form (GET) or save changes (POST)."""
     scholarship = Scholarship.query.get_or_404(scholarship_id)
@@ -158,6 +162,7 @@ def edit_scholarship(scholarship_id):
 
 
 @main_bp.route("/scholarships/<int:scholarship_id>/delete", methods=["POST"])
+@login_required
 def delete_scholarship(scholarship_id):
     """Delete a scholarship. POST-only so it can't happen from a GET link/crawler."""
     scholarship = Scholarship.query.get_or_404(scholarship_id)
