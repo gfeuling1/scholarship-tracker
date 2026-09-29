@@ -1,6 +1,26 @@
 from datetime import datetime, date
 from app import db
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 
+class User(UserMixin, db.Model):
+    """A person who can log in. This app is designed for a single user,
+    but the table supports more if that ever changes."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+
+    def set_password(self, raw_password):
+        """Hash and store a password. Never store the plain text version."""
+        self.password_hash = generate_password_hash(raw_password)
+
+    def check_password(self, raw_password):
+        """Compare a plain-text guess against the stored hash."""
+        return check_password_hash(self.password_hash, raw_password)
+
+    def __repr__(self):
+        return f"<User {self.username!r}>"
 
 class Scholarship(db.Model):
     """A single scholarship application record."""

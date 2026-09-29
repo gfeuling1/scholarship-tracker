@@ -2,6 +2,9 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from app import db
 from app.models import Scholarship
 from app.forms import ScholarshipForm
+from flask_login import login_user, logout_user, login_required, current_user
+from app.models import User
+from app.forms import LoginForm
 
 main_bp = Blueprint("main", __name__)
 
@@ -36,6 +39,38 @@ def index():
         status_filter=status_filter,
         search_query=search_query,
     )
+
+@main_bp.route("/login", methods=["GET", "POST"])
+def login():
+    """Show the login form (GET) or process a login attempt (POST)."""
+    if current_user.is_authenticated:
+        return redirect(url_for("main.index"))
+
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+
+        if user is None or not user.check_password(form.password.data):
+            # Deliberately vague: we don't say which part was wrong.
+            # "Username not found" vs "wrong password" tells an attacker
+            # which usernames are valid — a small but real information leak.
+            flash("Invalid username or password.", "error")
+            return redirect(url_for("main.login"))
+
+        login_user(user, remember=form.remember_me.data)
+        flash(f"Welcome back, {user.username}.", "success")
+        return redirect(url_for("main.index"))
+
+    return render_template("login.html", form=form)
+
+
+@main_bp.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("You have been logged out.", "success")
+    return redirect(url_for("main.login"))
 
 @main_bp.route("/dashboard")
 def dashboard():

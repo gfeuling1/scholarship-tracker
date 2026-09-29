@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, DateField, SelectField, TextAreaField
 from wtforms.validators import DataRequired, NumberRange, URL, Optional, Length
-
+from wtforms import PasswordField, BooleanField
 from app.models import Scholarship
 
 
@@ -39,3 +39,10 @@ class ScholarshipForm(FlaskForm):
         "Application Link",
         validators=[Optional(), URL(message="Enter a valid URL, e.g. https://..."), Length(max=500)],
     )
+
+class LoginForm(FlaskForm):
+    """Login credentials."""
+
+    username = StringField("Username", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    remember_me = BooleanField("Remember Me")
