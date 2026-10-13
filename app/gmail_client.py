@@ -1,4 +1,5 @@
 import os
+import base64
 
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
@@ -47,3 +48,50 @@ def get_credentials():
 def get_gmail_service():
     """A ready-to-use Gmail API client."""
     return build("gmail", "v1", credentials=get_credentials())
+
+def _header(headers, name):
+    """Gmail returns headers as a list of {name, value} pairs."""
+    for h in headers:
+        if h["name"].lower() == name.lower():
+            return h["value"]
+    return ""
+
+
+def _decode(data):
+    """Gmail encodes bodies as URL-safe base64, sometimes missing padding."""
+    padded = data + "=" * (-len(data) % 4)
+    return base64.urlsafe_b64decode(padded).decode("utf-8", errors="replace")
+
+
+def _extract_body(payload):
+    """Emails are nested 'parts'. Walk the tree and return the first plain-text part."""
+    if payload.get("mimeType") == "text/plain" and payload.get("body", {}).get("data"):
+        return _decode(payload["body"]["data"])
+    for part in payload.get("parts", []) or []:
+        text = _extract_body(part)
+        if text:
+            return text
+    return ""
+
+
+def fetch_recent_messages(service, max_results=25, newer_than_days=30):
+    """Return recent emails as simple dicts: id, sender, subject, date, body."""
+    listing = service.users().messages().list(
+        userId="me", q=f"newer_than:{newer_than_days}d", maxResults=max_results
+    ).execute()
+
+    messages = []
+    for item in listing.get("messages", []):
+        msg = service.users().messages().get(
+            userId="me", id=item["id"], format="full"
+        ).execute()
+        headers = msg["payload"].get("headers", [])
+        messages.append({
+            "gmail_id": msg["id"],
+            "sender": _header(headers, "From"),
+            "subject": _header(headers, "Subject"),
+            "date": _header(headers, "Date"),
+            # Some emails are HTML-only; fall back to Gmail's short preview.
+            "body": _extract_body(msg["payload"]) or msg.get("snippet", ""),
+        })
+    return messages
